@@ -1,0 +1,1 @@
+export const farewell = name => `Goodbye, ${name}!`;\n
