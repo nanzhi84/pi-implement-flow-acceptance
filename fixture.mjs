@@ -6,6 +6,7 @@ const root = process.env.FLOW_RESOURCE_DIR;
 if (!root) throw new Error('FLOW_RESOURCE_DIR required');
 const mode = process.argv[2];
 if (mode === 'prepare') {
+  if (process.env.FLOW_FIXTURE_FAIL_PREPARE === '1') throw new Error('Injected preparation failure');
   await mkdir(join(root, 'data'), { recursive: true });
 } else if (mode === 'cleanup') {
   await rm(join(root, 'data'), { recursive: true, force: true });
