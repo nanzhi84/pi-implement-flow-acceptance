@@ -20,9 +20,28 @@ if (mode === 'prepare') {
   try { execFileSync(process.execPath, ['app.mjs'], { stdio: 'pipe' }); }
   catch (error) { rejected = error.status === 2; }
   if (!rejected) throw new Error('missing-name contract failed');
+  const assertRejected = (args) => {
+    let rejectedWithoutOutput = false;
+    try { execFileSync(process.execPath, ['app.mjs', ...args], { encoding: 'utf8', stdio: 'pipe' }); }
+    catch (error) { rejectedWithoutOutput = error.status === 2 && error.stdout === ''; }
+    if (!rejectedWithoutOutput) throw new Error('rejection contract failed');
+  };
+  for (const blank of [' ', '   ', '\t', '\f', '\v', '\u00a0', '\u2003', ' \t\f\v\u00a0\u2003']) {
+    assertRejected([blank]);
+  }
+  for (const args of [[], [''], ['Ada\r'], ['Ada\n'], ['A\rda'], ['A\nda']]) {
+    assertRejected(args);
+  }
+  for (const name of ['Grace', ' Ada ', '\t\f\v\u00a0\u2003Ada\u2003\u00a0\v\f\t', 'A da', '\u200b']) {
+    const output = execFileSync(process.execPath, ['app.mjs', name], { encoding: 'utf8' });
+    if (output !== `Hello, ${name}!\n`) throw new Error('original-name contract failed');
+  }
   process.stdout.write(JSON.stringify({ passed: true, assertions: [
     { name: 'greeting-for-name', passed: true },
     { name: 'missing-name-rejected', passed: true },
+    { name: 'whitespace-only-rejected', passed: true },
+    { name: 'invalid-name-rejected-without-stdout', passed: true },
+    { name: 'original-name-preserved', passed: true },
   ] }) + '\n');
 } else {
   throw new Error('Unsupported fixture phase');
