@@ -19,7 +19,7 @@ function release() {
   catch (error) {
     let status;
     try { status = JSON.parse(error.stdout).status; } catch { /* unknown; fail closed */ }
-    if (status === 404) return undefined;
+    if (String(status) === '404') return undefined;
     throw new Error('Release lookup failed; no replay');
   }
 }
