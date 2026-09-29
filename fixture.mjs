@@ -16,13 +16,15 @@ if (mode === 'prepare') {
 } else if (mode === 'accept') {
   const greeting = execFileSync(process.execPath, ['app.mjs', 'Ada'], { encoding: 'utf8' });
   if (greeting !== 'Hello, Ada!\n') throw new Error('greeting contract failed');
-  let rejected = false;
-  try { execFileSync(process.execPath, ['app.mjs'], { stdio: 'pipe' }); }
-  catch (error) { rejected = error.status === 2; }
-  if (!rejected) throw new Error('missing-name contract failed');
+  for (const name of ['   ', '\t', '\t \t', '\f', '\v', '\u00a0', '\u2003', ' \t\f\v\u00a0\u2003']) {
+    let rejectedWhitespace = false;
+    try { execFileSync(process.execPath, ['app.mjs', name], { stdio: 'pipe' }); }
+    catch (error) { rejectedWhitespace = error.status === 2 && error.stdout.length === 0; }
+    if (!rejectedWhitespace) throw new Error('whitespace-only-name contract failed');
+  }
   process.stdout.write(JSON.stringify({ passed: true, assertions: [
     { name: 'greeting-for-name', passed: true },
-    { name: 'missing-name-rejected', passed: true },
+    { name: 'whitespace-only-rejected', passed: true },
   ] }) + '\n');
 } else {
   throw new Error('Unsupported fixture phase');
